@@ -20,11 +20,12 @@ public class movement : MonoBehaviour
 
     void Update()
     {
-        // Get input from arrow keys or WASD for vertical movement
+        // Get input from arrow keys or WASD for horizontal and vertical movement
+        float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        // Calculate movement direction (only along the z-axis)
-        Vector3 movement = new Vector3(0f, 0f, verticalInput).normalized;
+        // Calculate movement direction
+        Vector3 movement = new Vector3(horizontalInput, 0f, verticalInput).normalized;
 
         // Move the object
         transform.Translate(movement * speed * Time.deltaTime);
