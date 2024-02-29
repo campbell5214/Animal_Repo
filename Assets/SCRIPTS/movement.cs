@@ -11,10 +11,12 @@ public class movement : MonoBehaviour
     private Rigidbody rb;
     private int jumpsRemaining;
     private float lastJumpTime;
+    private Animator animator; // Reference to the Animator component
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>(); // Get the Animator component
         ResetJumpCooldown();
     }
 
@@ -30,10 +32,20 @@ public class movement : MonoBehaviour
         // Move the object
         transform.Translate(movement * speed * Time.deltaTime);
 
-        // Jumping (triggered by spacebar)
-        if (Input.GetKeyDown(KeyCode.Space) && CanJump())
+        // Update animator parameters
+        if (animator != null)
         {
-            Jump();
+            // Set trigger for run animation if the character is moving
+            if (movement.magnitude > 0)
+            {
+                animator.SetTrigger("Run");
+            }
+
+            // Jumping (triggered by spacebar)
+            if (Input.GetKeyDown(KeyCode.Space) && CanJump())
+            {
+                Jump();
+            }
         }
     }
 
@@ -55,6 +67,12 @@ public class movement : MonoBehaviour
             Invoke("ResetJumpCooldown", secondaryJumpCooldown);
         }
         lastJumpTime = Time.time;
+
+        // Trigger jump animation
+        if (animator != null)
+        {
+            animator.SetTrigger("Jump"); // Trigger the "Jump" animation
+        }
     }
 
     void ResetJumpCooldown()
