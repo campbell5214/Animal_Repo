@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections;
 public class movement : MonoBehaviour
 {
     public float speed = 5f;
@@ -11,18 +11,22 @@ public class movement : MonoBehaviour
     private Rigidbody rb;
     private int jumpsRemaining;
     private float lastJumpTime;
-    private Animator animator; 
+    private Animator animator; // Reference to the Animator component
+    private bool isSpeedBoosted = false;
+    private float speedBoostDuration = 2f;
+    private float originalSpeed;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        animator = GetComponent<Animator>(); 
+        animator = GetComponent<Animator>(); // Get the Animator component
         ResetJumpCooldown();
+        originalSpeed = speed;
     }
 
     void Update()
     {
-        // Get input
+        // Get input from arrow keys or WASD for horizontal and vertical movement
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
@@ -30,23 +34,24 @@ public class movement : MonoBehaviour
         Vector3 movement = new Vector3(horizontalInput, 0f, verticalInput).normalized;
 
         // Move the object
-        transform.Translate(movement * speed * Time.deltaTime);
+        if (!isSpeedBoosted)
+            transform.Translate(movement * speed * Time.deltaTime);
+        else
+            transform.Translate(movement * (speed * 2f) * Time.deltaTime); // Double speed during boost
 
         // Update animator parameters
         if (animator != null)
         {
-            // Set the "Speed_f" parameter based on movement speed
-            animator.SetFloat("Speed_f", movement.magnitude * speed);
+            // Set trigger for run animation if the character is moving
+            if (movement.magnitude > 0)
+            {
+                animator.SetTrigger("Run");
+            }
 
-            // Trigger "Jump_b" parameter if jump is pressed and allowed
+            // Jumping (triggered by spacebar)
             if (Input.GetKeyDown(KeyCode.Space) && CanJump())
             {
                 Jump();
-                animator.SetBool("Jump_b", true);
-            }
-            else
-            {
-                animator.SetBool("Jump_b", false);
             }
         }
     }
@@ -69,11 +74,34 @@ public class movement : MonoBehaviour
             Invoke("ResetJumpCooldown", secondaryJumpCooldown);
         }
         lastJumpTime = Time.time;
+
+        // Trigger jump animation
+        if (animator != null)
+        {
+            animator.SetTrigger("Jump"); // Trigger the "Jump" animation
+        }
     }
 
     void ResetJumpCooldown()
     {
         jumpsRemaining = maxJumps;
         lastJumpTime = Time.time;
+    }
+
+    // Collision detection with pizza
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Pizza"))
+        {
+            StartCoroutine(SpeedBoost());
+            Destroy(other.gameObject); // Destroy the pizza
+        }
+    }
+
+    IEnumerator SpeedBoost()
+    {
+        isSpeedBoosted = true;
+        yield return new WaitForSeconds(speedBoostDuration);
+        isSpeedBoosted = false;
     }
 }
